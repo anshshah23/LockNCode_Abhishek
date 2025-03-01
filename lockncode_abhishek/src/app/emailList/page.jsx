@@ -12,9 +12,11 @@ const cleanEmailBody = (html) => {
     return sanitizedHtml.replace(/<\/?(html|head|body)[^>]*>/g, "");
 };
 
-const extractLinks = (html) => {
-    if (html) {
-        let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+
+const extractLinks = (data) => {
+    const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(data);
+    if (isHtml) {
+        let sanitizedHtml = DOMPurify.sanitize(data, { USE_PROFILES: { html: true } });
         const parser = new DOMParser();
         const doc = parser.parseFromString(sanitizedHtml, "text/html");
 
@@ -23,20 +25,14 @@ const extractLinks = (html) => {
         doc.querySelectorAll("a").forEach((a) => {
             if (a.href) links.push(a.href);
         });
-
-        doc.querySelectorAll("img, iframe, form").forEach((el) => {
-            const src = el.getAttribute("src") || el.getAttribute("action");
-            if (src) links.push(src);
-        });
         return [...new Set(links)];
     }
     else {
         const urlRegex = /<https?:\/\/[^\s<>"]+>|https?:\/\/[^\s<>"]+/gi;
-        const links = html.match(urlRegex) || [];
-        return links.map(link => link.replace(/[<>]/g, '')); 
+        const links = data.match(urlRegex) || [];
+        return links.map(link => link.replace(/[<>]/g, ''));
     }
 };
-
 
 
 function EmailTable() {
@@ -63,13 +59,18 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
-            console.log("Emails fetched:", data);
+            data.map((email, index) => {
+                const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
+                console.log("isHtml", isHtml);
+                console.log(email.body);
+            });
             setCurrentIndex(0);
         } catch (error) {
             console.error("Error fetching emails:", error);
         }
         setLoading(false);
     };
+    
 
     const currentEmail = emailData[currentIndex] || null;
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
