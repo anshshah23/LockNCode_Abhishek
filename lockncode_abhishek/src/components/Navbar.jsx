@@ -34,6 +34,7 @@ function Navbar() {
         { name: "Home", link: "/" },
         { name: "Features", link: "/features" },
         { name: "Analytics", link: "/analytics" },
+        { name: "Emails", link: "/emailList" },
     ];
 
     return (
