@@ -6,7 +6,6 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
-    const [emails, setEmails] = useState([]);
     const router = useRouter();
 
     const loginAndConnect = async () => {
@@ -63,7 +62,7 @@ export const AuthProvider = ({ children }) => {
                     return await msgResponse.json();
                 });
                 const emailData = await Promise.all(emailPromises);
-                setEmails(emailData);
+                return emailData;
             }
         } catch (error) {
             console.error('Error fetching emails:', error);
@@ -89,7 +88,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ loginAndConnect, storeTokenInLS, logout, emails }}>
+        <AuthContext.Provider value={{ loginAndConnect, storeTokenInLS, logout, fetchEmails }}>
             {children}
         </AuthContext.Provider>
     );

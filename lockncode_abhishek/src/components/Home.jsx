@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Canvas } from '@react-three/fiber';
+import { useAuth } from "@/components/auth";
 
 // 3D Shield Model
 function ShieldModel(props) {
@@ -92,7 +93,22 @@ function Home() {
   const { scrollYProgress } = useScroll()
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9])
+  const { fetchEmails } = useAuth()
+  const [emails, setEmails] = useState([])
+  const [token, setToken] = useState(null)
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const authToken = localStorage.getItem("authToken");
+      setToken(authToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchEmails(token); // Fetch emails if token exists
+    }
+  }, [fetchEmails]);
   useEffect(() => {
     // Add dark mode class to body
     document.body.classList.add('dark')
@@ -103,11 +119,11 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-    
+
 
       {/* Hero Section */}
       <section className="relative pt-40 pb-20 md:pb-32 overflow-hidden">
-        
+
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
