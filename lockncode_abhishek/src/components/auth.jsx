@@ -48,12 +48,13 @@ export const AuthProvider = ({ children }) => {
     const base64Decode = (data) => {
         return Buffer.from(data, 'base64').toString('utf-8');
     };
-
+    
     const extractEmailData = (email) => {
         const headers = email.payload.headers;
 
         const subject = headers.find(header => header.name === 'Subject')?.value;
         const from = headers.find(header => header.name === 'From')?.value;
+        const date = headers.find(header => header.name === 'Date')?.value;
 
         let body = '';
 
@@ -69,7 +70,8 @@ export const AuthProvider = ({ children }) => {
         return {
             subject,
             from,
-            body
+            body,
+            date
         };
     };
 
@@ -117,6 +119,7 @@ export const AuthProvider = ({ children }) => {
             return [];
         }
     };
+
 
 
 
