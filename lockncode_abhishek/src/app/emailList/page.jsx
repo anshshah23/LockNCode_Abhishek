@@ -13,9 +13,11 @@ const cleanEmailBody = (html) => {
     return sanitizedHtml.replace(/<\/?(html|head|body)[^>]*>/g, "");
 };
 
-const extractLinks = (html) => {
-    if (html) {
-        let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+
+const extractLinks = (data) => {
+    const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(data);
+    if (isHtml) {
+        let sanitizedHtml = DOMPurify.sanitize(data, { USE_PROFILES: { html: true } });
         const parser = new DOMParser();
         const doc = parser.parseFromString(sanitizedHtml, "text/html");
 
@@ -24,95 +26,15 @@ const extractLinks = (html) => {
         doc.querySelectorAll("a").forEach((a) => {
             if (a.href) links.push(a.href);
         });
-
-        doc.querySelectorAll("img, iframe, form").forEach((el) => {
-            const src = el.getAttribute("src") || el.getAttribute("action");
-            if (src) links.push(src);
-        });
         return [...new Set(links)];
     }
     else {
         const urlRegex = /<https?:\/\/[^\s<>"]+>|https?:\/\/[^\s<>"]+/gi;
-        const links = html.match(urlRegex) || [];
+        const links = data.match(urlRegex) || [];
         return links.map(link => link.replace(/[<>]/g, ''));
     }
 };
 
-const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true });
-
-async function detectEmailPhishing(subject, body) {
-    try {
-        const prompt = `You are an intelligent email security assistant. Analyze the provided email and determine if it is a phishing attempt.
-        
-        Follow these steps:
-        1. Check the sender's domain.
-        2. Look for urgency or fear-based language.
-        3. Inspect links or attachments for suspicious patterns.
-        4. Identify requests for sensitive information.
-        5. Evaluate grammar, spelling, and sentence structure.
-        6. Detect generic greetings.
-
-        ✅ Return ONLY JSON in this format:
-        {
-            "isPhishing": true/false,
-            "confidenceScore": 0-100,
-            "phishingReasons": ["reason1", "reason2"],
-            "suspiciousLinks": ["link1", "link2"],
-            "suggestedAction": "Ignore/Delete" or "Legitimate Email"
-        }
-
-        Do NOT include any explanations, only return JSON.
-        `;
-
-        const emailText = `Subject: ${subject}\nBody: ${body}`;
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [
-                { role: "system", content: prompt },
-                { role: "user", content: emailText }
-            ],
-            temperature: 0.3 // Lower temperature for better structured output
-        });
-
-        const messageContent = response.choices[0]?.message?.content?.trim();
-
-        // ✅ Validate and attempt to parse JSON safely
-        if (!messageContent) {
-            console.error("OpenAI API returned an empty response");
-            return {
-                isPhishing: false,
-                confidenceScore: 0,
-                phishingReasons: ["API error or empty response"],
-                suspiciousLinks: [],
-                suggestedAction: "Unable to analyze",
-            };
-        }
-
-        try {
-            return JSON.parse(messageContent);
-        } catch (parseError) {
-            console.error("OpenAI API Response Parsing Error:", parseError, "Response:", messageContent);
-            return {
-                isPhishing: false,
-                confidenceScore: 0,
-                phishingReasons: ["Response parsing failed"],
-                suspiciousLinks: [],
-                suggestedAction: "Unable to analyze",
-            };
-        }
-    } catch (error) {
-        console.error("OpenAI API Request Failed:", error);
-
-        return {
-            isPhishing: false,
-            confidenceScore: 0,
-            phishingReasons: ["API request failed"],
-            suspiciousLinks: [],
-            suggestedAction: "Unable to analyze",
-        };
-    }
-}
 
 function EmailTable() {
     const { fetchEmails } = useAuth();
@@ -139,12 +61,18 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
-            setCurrentIndex(0); // Set the first email as the default selection
+            data.map((email, index) => {
+                const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
+                console.log("isHtml", isHtml);
+                console.log(email.body);
+            });
+            setCurrentIndex(0);
         } catch (error) {
             console.error("Error fetching emails:", error);
         }
         setLoading(false);
     };
+    
 
     const currentEmail = emailData[currentIndex] || null;
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
