@@ -7,7 +7,6 @@ import { Shield, Mail, Globe, MessageSquare, BarChart3, Code, AlertTriangle, Che
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAuth } from "@/components/auth";
 
 // 3D Shield Model
 function ShieldModel(props) {
@@ -105,24 +104,6 @@ function Home() {
   const { scrollYProgress } = useScroll()
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9])
-  const { fetchEmails } = useAuth()
-  const [emailData, setEmailData] = useState([])
-  const [token, setToken] = useState(null)
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const authToken = localStorage.getItem("authToken");
-      setToken(authToken);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (token) {
-      const data = fetchEmails(token);
-      setEmailData(data);
-    }
-  }, [token]);
-
 
   useEffect(() => {
     document.body.classList.add('dark')
@@ -165,8 +146,8 @@ function Home() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button size="lg" className="gap-2">
-                Try Demo <ChevronRight className="h-4 w-4" />
+              <Button size="lg" className="md:gap-2">
+                Try Demo <ChevronRight className="h-4 w-full md:w-4" />
               </Button>
               <Button size="lg" variant="outline">
                 Learn More
