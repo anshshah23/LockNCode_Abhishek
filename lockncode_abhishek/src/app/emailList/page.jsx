@@ -5,6 +5,7 @@ import { Inbox, RefreshCw, ChevronLeft, ChevronRight, Paperclip } from "lucide-r
 import { useAuth } from "@/components/auth";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
+import OpenAI from "openai";
 
 const cleanEmailBody = (html) => {
     if (!html) return "No content available";
@@ -12,9 +13,11 @@ const cleanEmailBody = (html) => {
     return sanitizedHtml.replace(/<\/?(html|head|body)[^>]*>/g, "");
 };
 
-const extractLinks = (html) => {
-    if (html) {
-        let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+
+const extractLinks = (data) => {
+    const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(data);
+    if (isHtml) {
+        let sanitizedHtml = DOMPurify.sanitize(data, { USE_PROFILES: { html: true } });
         const parser = new DOMParser();
         const doc = parser.parseFromString(sanitizedHtml, "text/html");
 
@@ -23,20 +26,14 @@ const extractLinks = (html) => {
         doc.querySelectorAll("a").forEach((a) => {
             if (a.href) links.push(a.href);
         });
-
-        doc.querySelectorAll("img, iframe, form").forEach((el) => {
-            const src = el.getAttribute("src") || el.getAttribute("action");
-            if (src) links.push(src);
-        });
         return [...new Set(links)];
     }
     else {
         const urlRegex = /<https?:\/\/[^\s<>"]+>|https?:\/\/[^\s<>"]+/gi;
-        const links = html.match(urlRegex) || [];
-        return links.map(link => link.replace(/[<>]/g, '')); 
+        const links = data.match(urlRegex) || [];
+        return links.map(link => link.replace(/[<>]/g, ''));
     }
 };
-
 
 
 function EmailTable() {
@@ -45,6 +42,7 @@ function EmailTable() {
     const [loading, setLoading] = useState(false);
     const [token, setToken] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [phishingResults, setPhishingResults] = useState({});
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -63,20 +61,44 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
-            console.log("Emails fetched:", data);
+            data.map((email, index) => {
+                const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
+                console.log("isHtml", isHtml);
+                console.log(email.body);
+            });
             setCurrentIndex(0);
         } catch (error) {
             console.error("Error fetching emails:", error);
         }
         setLoading(false);
     };
+    
 
     const currentEmail = emailData[currentIndex] || null;
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
     const links = currentEmail ? extractLinks(currentEmail.body) : [];
 
+    useEffect(() => {
+        const analyzeCurrentEmail = async () => {
+            if (emailData.length > 0 && currentIndex < emailData.length) {
+                const currentEmail = emailData[currentIndex];
+
+                // Prevent re-analyzing the same email
+                if (!phishingResults[currentEmail.id]) {
+                    const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
+                    setPhishingResults((prevResults) => ({
+                        ...prevResults,
+                        [currentEmail.id]: phishingResult,
+                    }));
+                }
+            }
+        };
+
+        analyzeCurrentEmail();
+    }, [currentIndex, emailData]);
+
     return (
-        <div className="w-full min-h-screen p-4 md:p-6 bg-zinc-950 text-white">
+        <div className="w-full min-h-screen p-4 md:p-6 bg-slate-900 text-white">
             {/* Inbox Header */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-14">
                 <h2 className="text-2xl font-bold">Your Inbox</h2>
@@ -106,6 +128,17 @@ function EmailTable() {
                         <Field label="Date & Time" value={formatDate(currentEmail.date)} />
                         <Field label="From" value={currentEmail.from} />
                         <Field label="Subject" value={currentEmail.subject} />
+                        <Field
+                            label="Phishing Analysis"
+                            value={
+                                currentEmail && phishingResults[currentEmail.id] ? (
+                                    <div>
+                                        <p><strong>Is Phishing:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
+                                        <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
+                                    </div>
+                                ) : "Analyzing..."
+                            }
+                        />
 
                         {/* Navigation Buttons */}
                         <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
