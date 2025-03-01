@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Canvas } from '@react-three/fiber';
+import { useAuth } from "@/components/auth";
 
 // 3D Shield Model
 function ShieldModel(props) {
@@ -92,7 +93,22 @@ function Home() {
   const { scrollYProgress } = useScroll()
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9])
+  const { fetchEmails } = useAuth()
+  const [emails, setEmails] = useState([])
+  const [token, setToken] = useState(null)
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const authToken = localStorage.getItem("authToken");
+      setToken(authToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchEmails(token); // Fetch emails if token exists
+    }
+  }, [fetchEmails]);
   useEffect(() => {
     // Add dark mode class to body
     document.body.classList.add('dark')
@@ -103,11 +119,11 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-    
+
 
       {/* Hero Section */}
       <section className="relative pt-40 pb-20 md:pb-32 overflow-hidden">
-        
+
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
@@ -115,7 +131,7 @@ function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400"
+              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-400"
             >
               AI-Powered Phishing Detection
             </motion.h1>
@@ -512,7 +528,7 @@ function Home() {
                   <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
                     <code className="text-foreground">
                       {`// Check a URL for phishing
-fetch('https://api.phishguard.ai/v1/analyze/url', {
+fetch('https://api.PhishNet.ai/v1/analyze/url', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -569,7 +585,7 @@ fetch('https://api.phishguard.ai/v1/analyze/url', {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Shield className="h-6 w-6 text-primary" />
-                <span className="font-bold text-xl">PhishGuard AI</span>
+                <span className="font-bold text-xl">PhishNet AI</span>
               </div>
               <p className="text-muted-foreground text-sm">
                 Advanced AI-powered phishing detection to protect your organization from evolving threats.
@@ -608,7 +624,7 @@ fetch('https://api.phishguard.ai/v1/analyze/url', {
 
           <div className="border-t border-muted mt-12 pt-6 flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} PhishGuard AI. All rights reserved.
+              &copy; {new Date().getFullYear()} PhishNet AI. All rights reserved.
             </p>
             <div className="flex gap-4 mt-4 md:mt-0">
               <a href="#" className="text-muted-foreground hover:text-primary">
