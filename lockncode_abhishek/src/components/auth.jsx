@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
     const router = useRouter();
 
     const loginAndConnect = async () => {
+        console.log("loginAndConnect");
         const oauthEP = "https://accounts.google.com/o/oauth2/v2/auth";
         const params = new URLSearchParams({
             client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
     const fetchEmails = async (accessToken) => {
         try {
-            const listResponse = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages', {
+            const listResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
@@ -54,7 +55,7 @@ export const AuthProvider = ({ children }) => {
             const listData = await listResponse.json();
             if (listData.messages) {
                 const emailPromises = listData.messages.map(async (msg) => {
-                    const msgResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+                    const msgResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
                         headers: {
                             Authorization: `Bearer ${accessToken}`
                         }
@@ -69,7 +70,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+
     const logout = async () => {
+        console.log("logout");
         if (token) {
             try {
                 await fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {

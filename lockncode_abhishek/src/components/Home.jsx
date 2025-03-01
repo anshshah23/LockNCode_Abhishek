@@ -7,7 +7,6 @@ import { Shield, Mail, Globe, MessageSquare, BarChart3, Code, AlertTriangle, Che
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Canvas } from '@react-three/fiber';
 import { useAuth } from "@/components/auth";
 
 // 3D Shield Model
@@ -52,7 +51,20 @@ function ThreatModel(props) {
   )
 }
 
-
+function Scene() {
+  return (
+    <Canvas shadows camera={{ position: [0, 0, 5], fov: 50 }}>
+      <ambientLight intensity={0.5} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+      <Suspense fallback={null}>
+        <ShieldModel position={[-1.5, 0, 0]} />
+        <ThreatModel position={[1.5, 0, 0]} />
+        <Environment preset="city" />
+      </Suspense>
+      <OrbitControls enableZoom={false} enablePan={false} />
+    </Canvas>
+  )
+}
 
 // Feature Card Component
 function FeatureCard({ icon: Icon, title, description }) {
@@ -94,7 +106,7 @@ function Home() {
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9])
   const { fetchEmails } = useAuth()
-  const [emails, setEmails] = useState([])
+  const [emailData, setEmailData] = useState([])
   const [token, setToken] = useState(null)
 
   useEffect(() => {
@@ -106,11 +118,13 @@ function Home() {
 
   useEffect(() => {
     if (token) {
-      fetchEmails(token); // Fetch emails if token exists
+      const data = fetchEmails(token);
+      setEmailData(data);
     }
-  }, [fetchEmails]);
+  }, [token]);
+
+
   useEffect(() => {
-    // Add dark mode class to body
     document.body.classList.add('dark')
     return () => {
       document.body.classList.remove('dark')
@@ -163,7 +177,11 @@ function Home() {
 
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent"></div>
       </section>
-
+      {/* <motion.div style={{ opacity, scale }} className="absolute inset-0 z-0 h-full w-full">
+        <div className="h-full w-full">
+          <Scene />
+        </div>
+      </motion.div> */}
       {/* Stats Section */}
       <section className="py-12 md:py-20">
         <div className="container mx-auto px-4">
@@ -174,7 +192,6 @@ function Home() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section id="features" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
