@@ -7,7 +7,6 @@ import { Shield, Mail, Globe, MessageSquare, BarChart3, Code, AlertTriangle, Che
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Canvas } from '@react-three/fiber';
 import { useAuth } from "@/components/auth";
 
 // 3D Shield Model
@@ -94,7 +93,7 @@ function Home() {
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9])
   const { fetchEmails } = useAuth()
-  const [emails, setEmails] = useState([])
+  const [emailData, setEmailData] = useState([])
   const [token, setToken] = useState(null)
 
   useEffect(() => {
@@ -106,11 +105,13 @@ function Home() {
 
   useEffect(() => {
     if (token) {
-      fetchEmails(token); // Fetch emails if token exists
+      const data = fetchEmails(token);
+      setEmailData(data);
     }
-  }, [fetchEmails]);
+  }, [token]);
+
+
   useEffect(() => {
-    // Add dark mode class to body
     document.body.classList.add('dark')
     return () => {
       document.body.classList.remove('dark')

@@ -13,9 +13,7 @@ function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const { loginAndConnect, logout } = useAuth();
     const [token, setToken] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false); 
 
-    // Handle scroll effect
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 100);
@@ -25,7 +23,6 @@ function Navbar() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Retrieve token from localStorage
     useEffect(() => {
         if (typeof window !== "undefined") {
             const authToken = localStorage.getItem("authToken");
@@ -53,7 +50,6 @@ function Navbar() {
                     </span>
                 </div>
 
-                {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-6">
                     {Links.map((link) => (
                         <Link key={link.name} href={link.link} className="text-lg hover:text-primary transition-colors">
@@ -61,7 +57,6 @@ function Navbar() {
                         </Link>
                     ))}
 
-                    {/* Conditionally show buttons */}
                     {!token ? (
                         <button className="button" onClick={loginAndConnect}>
                             Sign In
