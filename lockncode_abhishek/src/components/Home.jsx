@@ -120,6 +120,7 @@ function Home() {
     if (token) {
       const data = fetchEmails(token);
       setEmailData(data);
+      console.log("data: ",data);
     }
   }, [token]);
 
