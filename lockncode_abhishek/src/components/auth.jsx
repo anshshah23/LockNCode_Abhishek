@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     const base64Decode = (data) => {
         return Buffer.from(data, 'base64').toString('utf-8');
     };
-    
+
     const extractAttachments = async (parts, attachments, messageId, accessToken) => {
         for (const part of parts) {
             if (part.filename && part.filename.length > 0 && part.body?.attachmentId) {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
                         Accept: 'application/json'
                     }
                 });
-    
+
                 if (attachmentResponse.ok) {
                     const attachmentData = await attachmentResponse.json();
                     attachments.push({
@@ -73,17 +73,17 @@ export const AuthProvider = ({ children }) => {
             }
         }
     };
-    
+
     const extractEmailData = async (email, accessToken) => {
         const headers = email.payload.headers;
-    
+
         const subject = headers.find(header => header.name === 'Subject')?.value || '';
         const from = headers.find(header => header.name === 'From')?.value || '';
         const date = headers.find(header => header.name === 'Date')?.value || '';
-    
+
         let body = '';
         let attachments = [];
-    
+
         if (email.payload.parts) {
             const textPart = email.payload.parts.find(part => part.mimeType === 'text/plain');
             if (textPart && textPart.body?.data) {
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
         } else if (email.payload.body?.data) {
             body = base64Decode(email.payload.body.data);
         }
-    
+
         return {
             subject,
             from,
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
             attachments
         };
     };
-    
+
     const fetchEmails = async (accessToken) => {
         try {
             const listResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
@@ -111,13 +111,13 @@ export const AuthProvider = ({ children }) => {
                     Accept: 'application/json'
                 }
             });
-    
+
             if (!listResponse.ok) {
                 throw new Error(`Failed to fetch email list: ${listResponse.statusText}`);
             }
-    
+
             const listData = await listResponse.json();
-    
+
             if (listData.messages) {
                 const emailPromises = listData.messages.map(async (msg) => {
                     const msgResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
@@ -126,16 +126,16 @@ export const AuthProvider = ({ children }) => {
                             Accept: 'application/json'
                         }
                     });
-    
+
                     if (!msgResponse.ok) {
                         console.warn(`Failed to fetch email with ID ${msg.id}`);
                         return null;
                     }
-    
+
                     const emailJson = await msgResponse.json();
                     return await extractEmailData(emailJson, accessToken);
                 });
-    
+
                 const emailData = (await Promise.all(emailPromises)).filter(email => email !== null);
                 return emailData;
             } else {
@@ -147,53 +147,7 @@ export const AuthProvider = ({ children }) => {
             return [];
         }
     };
-    
-    
-    const fetchEmails = async (accessToken) => {
-        try {
-            const listResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    Accept: 'application/json'
-                }
-            });
-    
-            if (!listResponse.ok) {
-                throw new Error(`Failed to fetch email list: ${listResponse.statusText}`);
-            }
-    
-            const listData = await listResponse.json();
-    
-            if (listData.messages) {
-                const emailPromises = listData.messages.map(async (msg) => {
-                    const msgResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            Accept: 'application/json'
-                        }
-                    });
-    
-                    if (!msgResponse.ok) {
-                        console.warn(`Failed to fetch email with ID ${msg.id}`);
-                        return null;
-                    }
-    
-                    const emailJson = await msgResponse.json();
-                    return extractEmailData(emailJson);
-                });
-    
-                const emailData = (await Promise.all(emailPromises)).filter(email => email !== null);
-                return emailData;
-            } else {
-                console.log('No emails found.');
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching emails:', error);
-            return [];
-        }
-    };
-    
+
 
     const logout = async () => {
         console.log("logout");
