@@ -14,9 +14,24 @@ const cleanEmailBody = (html) => {
 
 const extractLinks = (html) => {
     if (!html) return [];
-    const urlRegex = /https?:\/\/[^\s"<>\]]+/g;
-    return html.match(urlRegex) || [];
+    let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(sanitizedHtml, "text/html");
+
+    let links = [];
+
+    doc.querySelectorAll("a").forEach((a) => {
+        if (a.href) links.push(a.href);
+    });
+
+    doc.querySelectorAll("img, iframe, form").forEach((el) => {
+        const src = el.getAttribute("src") || el.getAttribute("action");
+        if (src) links.push(src);
+    });
+    return [...new Set(links)];
 };
+
+
 
 function EmailTable() {
     const { fetchEmails } = useAuth();
@@ -51,7 +66,7 @@ function EmailTable() {
 
     const currentEmail = emailData[currentIndex] || null;
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
-    const links = extractLinks(emailBody);
+    const links = currentEmail ? extractLinks(currentEmail.body) : [];
 
     return (
         <div className="w-full min-h-screen p-4 md:p-6 bg-zinc-950 text-white">
