@@ -78,7 +78,7 @@ function EmailTable() {
     return (
         <div className="w-full min-h-screen p-4 md:p-6 bg-zinc-950 text-white">
             {/* Inbox Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-20">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-14">
                 <h2 className="text-2xl font-bold">Your Inbox</h2>
                 <Button
                     onClick={loadEmails}
