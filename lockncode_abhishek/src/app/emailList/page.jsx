@@ -35,6 +35,81 @@ const extractLinks = (data) => {
     }
 };
 
+const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true });
+
+async function detectEmailPhishing(subject, body) {
+    try {
+        const prompt = `You are an intelligent email security assistant. Analyze the provided email and determine if it is a phishing attempt.
+        
+        Follow these steps:
+        1. Check the sender's domain.
+        2. Look for urgency or fear-based language.
+        3. Inspect links or attachments for suspicious patterns.
+        4. Identify requests for sensitive information.
+        5. Evaluate grammar, spelling, and sentence structure.
+        6. Detect generic greetings.
+
+        ✅ Return ONLY JSON in this format:
+        {
+            "isPhishing": true/false,
+            "confidenceScore": 0-100,
+            "phishingReasons": ["reason1", "reason2"],
+            "suspiciousLinks": ["link1", "link2"],
+            "suggestedAction": "Ignore/Delete" or "Legitimate Email"
+        }
+
+        Do NOT include any explanations, only return JSON.
+        `;
+
+        const emailText = `Subject: ${subject}\nBody: ${body}`;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                { role: "system", content: prompt },
+                { role: "user", content: emailText }
+            ],
+            temperature: 0.3 // Lower temperature for better structured output
+        });
+
+        const messageContent = response.choices[0]?.message?.content?.trim();
+
+        // ✅ Validate and attempt to parse JSON safely
+        if (!messageContent) {
+            console.error("OpenAI API returned an empty response");
+            return {
+                isPhishing: false,
+                confidenceScore: 0,
+                phishingReasons: ["API error or empty response"],
+                suspiciousLinks: [],
+                suggestedAction: "Unable to analyze",
+            };
+        }
+
+        try {
+            return JSON.parse(messageContent);
+        } catch (parseError) {
+            console.error("OpenAI API Response Parsing Error:", parseError, "Response:", messageContent);
+            return {
+                isPhishing: false,
+                confidenceScore: 0,
+                phishingReasons: ["Response parsing failed"],
+                suspiciousLinks: [],
+                suggestedAction: "Unable to analyze",
+            };
+        }
+    } catch (error) {
+        console.error("OpenAI API Request Failed:", error);
+
+        return {
+            isPhishing: false,
+            confidenceScore: 0,
+            phishingReasons: ["API request failed"],
+            suspiciousLinks: [],
+            suggestedAction: "Unable to analyze",
+        };
+    }
+}
 
 function EmailTable() {
     const { fetchEmails } = useAuth();
@@ -61,6 +136,7 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
+            setCurrentIndex(0); // Set the first email as the default selection
             data.map((email, index) => {
                 const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
                 console.log("isHtml", isHtml);
@@ -72,7 +148,7 @@ function EmailTable() {
         }
         setLoading(false);
     };
-    
+
 
     const currentEmail = emailData[currentIndex] || null;
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
@@ -80,22 +156,26 @@ function EmailTable() {
 
     useEffect(() => {
         const analyzeCurrentEmail = async () => {
-            if (emailData.length > 0 && currentIndex < emailData.length) {
-                const currentEmail = emailData[currentIndex];
+            if (emailData.length === 0 || currentIndex >= emailData.length) return;
 
-                // Prevent re-analyzing the same email
-                if (!phishingResults[currentEmail.id]) {
-                    const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
-                    setPhishingResults((prevResults) => ({
-                        ...prevResults,
-                        [currentEmail.id]: phishingResult,
-                    }));
-                }
+            const currentEmail = emailData[currentIndex];
+
+            if (!currentEmail) return; // Ensure email exists
+
+            try {
+                const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
+                setPhishingResults((prevResults) => ({
+                    ...prevResults,
+                    [currentEmail.id]: phishingResult, // Store results per email ID
+                }));
+            } catch (error) {
+                console.error("Phishing analysis failed:", error);
             }
         };
 
         analyzeCurrentEmail();
     }, [currentIndex, emailData]);
+
 
     return (
         <div className="w-full min-h-screen p-4 md:p-6 bg-slate-900 text-white">
@@ -121,7 +201,6 @@ function EmailTable() {
                 </Button>
             </div>
 
-            {/* Email Content */}
             {currentEmail ? (
                 <div className="w-full max-w-screen bg-zinc-900 p-6 rounded-lg shadow-lg">
                     <div className="space-y-4">
@@ -133,10 +212,13 @@ function EmailTable() {
                             value={
                                 currentEmail && phishingResults[currentEmail.id] ? (
                                     <div>
-                                        <p><strong>Is Phishing:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
+                                        <p className="text-lg"><strong>Results:</strong></p>
+                                        <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
                                         <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
+                                        <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
+                                        <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
                                     </div>
-                                ) : "Analyzing..."
+                                ) : loading ? "Loading..." : "Analyzing..."
                             }
                         />
 
