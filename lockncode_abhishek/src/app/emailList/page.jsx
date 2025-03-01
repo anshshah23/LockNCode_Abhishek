@@ -13,22 +13,28 @@ const cleanEmailBody = (html) => {
 };
 
 const extractLinks = (html) => {
-    if (!html) return [];
-    let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(sanitizedHtml, "text/html");
+    if (html) {
+        let sanitizedHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sanitizedHtml, "text/html");
 
-    let links = [];
+        let links = [];
 
-    doc.querySelectorAll("a").forEach((a) => {
-        if (a.href) links.push(a.href);
-    });
+        doc.querySelectorAll("a").forEach((a) => {
+            if (a.href) links.push(a.href);
+        });
 
-    doc.querySelectorAll("img, iframe, form").forEach((el) => {
-        const src = el.getAttribute("src") || el.getAttribute("action");
-        if (src) links.push(src);
-    });
-    return [...new Set(links)];
+        doc.querySelectorAll("img, iframe, form").forEach((el) => {
+            const src = el.getAttribute("src") || el.getAttribute("action");
+            if (src) links.push(src);
+        });
+        return [...new Set(links)];
+    }
+    else {
+        const urlRegex = /<https?:\/\/[^\s<>"]+>|https?:\/\/[^\s<>"]+/gi;
+        const links = html.match(urlRegex) || [];
+        return links.map(link => link.replace(/[<>]/g, '')); 
+    }
 };
 
 
@@ -57,6 +63,7 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
+            console.log("Emails fetched:", data);
             setCurrentIndex(0);
         } catch (error) {
             console.error("Error fetching emails:", error);
