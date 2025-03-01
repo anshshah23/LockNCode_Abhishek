@@ -5,6 +5,7 @@ import { Inbox, RefreshCw, ChevronLeft, ChevronRight, Paperclip } from "lucide-r
 import { useAuth } from "@/components/auth";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
+import OpenAI from "openai";
 
 const cleanEmailBody = (html) => {
     if (!html) return "No content available";
@@ -40,6 +41,7 @@ function EmailTable() {
     const [loading, setLoading] = useState(false);
     const [token, setToken] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [phishingResults, setPhishingResults] = useState({});
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -74,8 +76,27 @@ function EmailTable() {
     const emailBody = currentEmail ? cleanEmailBody(currentEmail.body) : "";
     const links = currentEmail ? extractLinks(currentEmail.body) : [];
 
+    useEffect(() => {
+        const analyzeCurrentEmail = async () => {
+            if (emailData.length > 0 && currentIndex < emailData.length) {
+                const currentEmail = emailData[currentIndex];
+
+                // Prevent re-analyzing the same email
+                if (!phishingResults[currentEmail.id]) {
+                    const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
+                    setPhishingResults((prevResults) => ({
+                        ...prevResults,
+                        [currentEmail.id]: phishingResult,
+                    }));
+                }
+            }
+        };
+
+        analyzeCurrentEmail();
+    }, [currentIndex, emailData]);
+
     return (
-        <div className="w-full min-h-screen p-4 md:p-6 bg-zinc-950 text-white">
+        <div className="w-full min-h-screen p-4 md:p-6 bg-slate-900 text-white">
             {/* Inbox Header */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-14">
                 <h2 className="text-2xl font-bold">Your Inbox</h2>
@@ -105,6 +126,17 @@ function EmailTable() {
                         <Field label="Date & Time" value={formatDate(currentEmail.date)} />
                         <Field label="From" value={currentEmail.from} />
                         <Field label="Subject" value={currentEmail.subject} />
+                        <Field
+                            label="Phishing Analysis"
+                            value={
+                                currentEmail && phishingResults[currentEmail.id] ? (
+                                    <div>
+                                        <p><strong>Is Phishing:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
+                                        <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
+                                    </div>
+                                ) : "Analyzing..."
+                            }
+                        />
 
                         {/* Navigation Buttons */}
                         <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
