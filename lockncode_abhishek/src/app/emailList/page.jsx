@@ -55,7 +55,8 @@ function EmailTable() {
 
     return (
         <div className="w-full min-h-screen p-4 md:p-6 bg-zinc-950 text-white">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+            {/* Inbox Header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-20">
                 <h2 className="text-2xl font-bold">Your Inbox</h2>
                 <Button
                     onClick={loadEmails}
@@ -76,18 +77,20 @@ function EmailTable() {
                 </Button>
             </div>
 
+            {/* Email Content */}
             {currentEmail ? (
-                <div className="w-full max-w-screen mx-auto bg-zinc-900 p-6 rounded-lg shadow-lg">
+                <div className="w-full max-w-screen bg-zinc-900 p-6 rounded-lg shadow-lg">
                     <div className="space-y-4">
                         <Field label="Date & Time" value={formatDate(currentEmail.date)} />
                         <Field label="From" value={currentEmail.from} />
                         <Field label="Subject" value={currentEmail.subject} />
 
-                        <div className="flex justify-between mt-6">
+                        {/* Navigation Buttons */}
+                        <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
                             <Button
                                 onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
                                 disabled={currentIndex === 0}
-                                className="bg-gray-700 text-white px-4 py-2 rounded-md flex items-center"
+                                className="bg-gray-700 text-white px-4 py-2 rounded-md flex items-center justify-center w-full md:w-auto"
                             >
                                 <ChevronLeft className="h-5 w-5 mr-2" /> Previous
                             </Button>
@@ -95,13 +98,16 @@ function EmailTable() {
                             <Button
                                 onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, emailData.length - 1))}
                                 disabled={currentIndex >= emailData.length - 1}
-                                className="bg-gray-700 text-white px-4 py-2 rounded-md flex items-center"
+                                className="bg-gray-700 text-white px-4 py-2 rounded-md flex items-center justify-center w-full md:w-auto"
                             >
                                 Next <ChevronRight className="h-5 w-5 ml-2" />
                             </Button>
                         </div>
 
-                        <Field label="Body" value={parse(emailBody)} />
+                        {/* Email Body */}
+                        <div className="w-full overflow-x-auto">
+                            <Field label="Body" className="overflow-x-auto break-words" value={parse(emailBody)} />
+                        </div>
 
                         {/* Attachments */}
                         {currentEmail.attachments && currentEmail.attachments.length > 0 && (
@@ -110,7 +116,7 @@ function EmailTable() {
                                 value={
                                     <ul className="list-disc pl-4">
                                         {currentEmail.attachments.map((file, index) => (
-                                            <li key={index} className="break-all flex items-center">
+                                            <li key={index} className="break-words flex items-center">
                                                 <Paperclip className="h-4 w-4 mr-2" />
                                                 <a
                                                     href={file.url}
@@ -134,7 +140,7 @@ function EmailTable() {
                                 links.length > 0 ? (
                                     <ul className="list-disc pl-4">
                                         {links.map((link, index) => (
-                                            <li key={index} className="break-all">
+                                            <li key={index} className="break-words">
                                                 <a
                                                     href={link}
                                                     target="_blank"
@@ -152,7 +158,7 @@ function EmailTable() {
                             }
                         />
 
-                        {/* Malicious Links Box (Placeholder) */}
+                        {/* Malicious Links Placeholder */}
                         <Field label="Potential Malicious Links" value="(Pending analysis...)" />
                     </div>
                 </div>
@@ -167,15 +173,17 @@ function EmailTable() {
     );
 }
 
+/* Reusable Field Component */
 const Field = ({ label, value }) => (
     <div className="w-full">
         <label className="text-sm font-semibold">{label}</label>
-        <div className="w-full bg-zinc-800 p-4 rounded-md border border-zinc-700 min-h-[50px]">
+        <div className="w-full bg-zinc-800 p-4 rounded-md border border-zinc-700 min-h-[50px] break-words">
             {value}
         </div>
     </div>
 );
 
+/* Date Formatting */
 const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
