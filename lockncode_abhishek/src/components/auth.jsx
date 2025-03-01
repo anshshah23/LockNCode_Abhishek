@@ -1,12 +1,11 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
-    const [user, setUser] = useState(null);
     const router = useRouter();
 
     const loginAndConnect = async () => {
@@ -18,37 +17,41 @@ export const AuthProvider = ({ children }) => {
             response_type: "token",
             scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly",
             include_granted_scopes: "true",
-            state: "pass-through-value",
+            state: "pass-through-value"
         });
-
         window.location.href = `${oauthEP}?${params.toString()}`;
     };
 
-    // Stores token in localStorage and state
-    const storeTokenInLS = (accessToken) => {
-        setToken(accessToken);
-        localStorage.setItem("authToken", accessToken);
+    useEffect(() => {
+        const localToken = localStorage.getItem('authToken');
+        if (localToken) {
+            setToken(localToken);
+            fetchEmails(localToken); // Fetch emails if token exists
+        }
+        const hash = window.location.hash;
+        if (hash.includes('access_token')) {
+            const urlParams = new URLSearchParams(hash.replace('#', ''));
+            const accessToken = urlParams.get('access_token');
+            if (accessToken) {
+                storeTokenInLS(accessToken);
+                fetchEmails(accessToken); // Fetch emails after storing token
+                window.history.replaceState(null, null, ' ');
+            }
+        }
+    }, []);
+
+    const storeTokenInLS = (serverToken) => {
+        setToken(serverToken);
+        localStorage.setItem('authToken', serverToken);
     };
 
-    // Fetches Gmail Emails
     const fetchEmails = async (accessToken) => {
-        if (!accessToken) {
-            console.error("Access token is missing!");
-            return [];
-        }
-
         try {
             const listResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
             });
-
-            if (!listResponse.ok) {
-                console.error("Failed to fetch email list:", await listResponse.json());
-                return [];
-            }
-
             const listData = await listResponse.json();
             if (listData.messages) {
                 const emailPromises = listData.messages.map(async (msg) => {
@@ -63,62 +66,41 @@ export const AuthProvider = ({ children }) => {
                 return emailData;
             }
         } catch (error) {
-            console.error("Error fetching user info:", error);
+            console.error('Error fetching emails:', error);
         }
     };
+
 
     const logout = async () => {
         console.log("logout");
         if (token) {
             try {
                 await fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
                 });
             } catch (error) {
-                console.error("Error revoking token:", error.message);
+                console.error('Error revoking token:', error.message);
             }
         }
-
         setToken(null);
-        setUser(null);
-        localStorage.removeItem("authToken");
-        router.push("/");
+        localStorage.removeItem('authToken');
+        router.push('/');
     };
 
-    // Checks for Token on Page Load
-    useEffect(() => {
-        const localToken = localStorage.getItem("authToken");
-        if (localToken) {
-            setToken(localToken);
-            fetchUserInfo(localToken);
-        }
-
-        const hash = window.location.hash;
-        if (hash.includes("access_token")) {
-            const urlParams = new URLSearchParams(hash.replace("#", ""));
-            const accessToken = urlParams.get("access_token");
-
-            if (accessToken) {
-                storeTokenInLS(accessToken);
-                fetchUserInfo(accessToken);
-                window.history.replaceState(null, null, " ");
-            }
-        }
-    }, []);
-
     return (
-        <AuthContext.Provider value={{ token, user, loginAndConnect, fetchEmails, logout }}>
+        <AuthContext.Provider value={{ loginAndConnect, storeTokenInLS, logout, fetchEmails }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-// Hook to use Authentication Context
 export const useAuth = () => {
     const authContextValue = useContext(AuthContext);
     if (!authContextValue) {
-        throw new Error("useAuth must be used within an AuthProvider");
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return authContextValue;
 };
