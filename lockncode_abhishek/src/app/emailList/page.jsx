@@ -13,7 +13,6 @@ const cleanEmailBody = (html) => {
     return sanitizedHtml.replace(/<\/?(html|head|body)[^>]*>/g, "");
 };
 
-
 const extractLinks = (data) => {
     const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(data);
     if (isHtml) {
@@ -139,8 +138,7 @@ function EmailTable() {
             setCurrentIndex(0); // Set the first email as the default selection
             data.map((email, index) => {
                 const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
-                console.log("isHtml", isHtml);
-                console.log(email.body);
+                console.log(email);
             });
             setCurrentIndex(0);
         } catch (error) {
@@ -245,30 +243,6 @@ function EmailTable() {
                         <div className="w-full overflow-x-auto">
                             <Field label="Body" className="overflow-x-auto break-words" value={parse(emailBody)} />
                         </div>
-
-                        {/* Attachments */}
-                        {currentEmail.attachments && currentEmail.attachments.length > 0 && (
-                            <Field
-                                label="Attachments"
-                                value={
-                                    <ul className="list-disc pl-4">
-                                        {currentEmail.attachments.map((file, index) => (
-                                            <li key={index} className="break-words flex items-center">
-                                                <Paperclip className="h-4 w-4 mr-2" />
-                                                <a
-                                                    href={file.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-400 hover:underline"
-                                                >
-                                                    {file.filename}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                }
-                            />
-                        )}
 
                         {/* Links Found */}
                         <Field
