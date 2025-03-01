@@ -10,33 +10,35 @@ clamav_client = ClamAVClient()
 
 @app.post("/scan/")
 async def scan_files(files: list[UploadFile] = File(...)):
-    scan_results = {}
+    scan_results = []
 
     for file in files:
+        file_info = {
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "size": file.size if hasattr(file, "size") else None,
+            "status": None,
+            "threat": None,
+        }
+
         try:
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 tmp_file.write(await file.read())
                 tmp_file_path = tmp_file.name
 
             scan_result = clamav_client.scan_file(tmp_file_path)
-
-            if scan_result and tmp_file_path in scan_result:
-                status = scan_result[tmp_file_path][0]
-                if status == "OK":
-                    scan_results[file.filename] = "✅ No threats detected"
-                elif status == "FOUND":
-                    threat = scan_result[tmp_file_path][1]
-                    scan_results[file.filename] = f"🚨 Threat detected: {threat}"
-                else:
-                    scan_results[file.filename] = "⚠️ Unknown scan result"
-            else:
-                scan_results[file.filename] = "⚠️ No scan result available"
+            # Store scan results directly
+            file_info["status"] = scan_result.get(tmp_file_path, [None])[0]
+            file_info["threat"] = scan_result.get(tmp_file_path, [None, None])[1]
 
         except Exception as e:
-            scan_results[file.filename] = f"❌ Error scanning file: {e}"
+            file_info["status"] = "Error"
+            file_info["threat"] = str(e)
 
         finally:
             if os.path.exists(tmp_file_path):
                 os.remove(tmp_file_path)
+
+        scan_results.append(file_info)
 
     return JSONResponse(content=scan_results)

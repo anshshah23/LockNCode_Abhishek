@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Create Authentication Context
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -9,9 +10,9 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const router = useRouter();
 
-    const loginAndConnect = async () => {
-        console.log("loginAndConnect");
-        const oauthEP = "https://accounts.google.com/o/oauth2/v2/auth";
+    // Google OAuth Login
+    const loginAndConnect = () => {
+        const oauthEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
         const params = new URLSearchParams({
             client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
             redirect_uri: process.env.NEXT_PUBLIC_FULL_BASE_DOMAIN,
@@ -21,54 +22,89 @@ export const AuthProvider = ({ children }) => {
             state: "pass-through-value",
         });
 
-        window.location.href = `${oauthEP}?${params.toString()}`;
+        window.location.href = `${oauthEndpoint}?${params.toString()}`;
     };
 
-    // Stores token in localStorage and state
+    // Store Token in Local Storage
     const storeTokenInLS = (accessToken) => {
         setToken(accessToken);
         localStorage.setItem("authToken", accessToken);
     };
 
-    // Fetches Gmail Emails
+    // Fetch Emails from Gmail API
     const fetchEmails = async (accessToken) => {
         if (!accessToken) {
             console.error("Access token is missing!");
-            return [];
+            return;
         }
 
         try {
-            const listResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages', {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
+            // Get the list of emails
+            const listResponse = await fetch(
+                "https://www.googleapis.com/gmail/v1/users/me/messages",
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
                 }
-            });
+            );
 
             if (!listResponse.ok) {
                 console.error("Failed to fetch email list:", await listResponse.json());
-                return [];
+                return;
             }
 
             const listData = await listResponse.json();
-            if (listData.messages) {
-                const emailPromises = listData.messages.map(async (msg) => {
-                    const msgResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+            if (!listData.messages) {
+                console.warn("No messages found.");
+                return [];
+            }
+
+            // Fetch email details
+            const emailPromises = listData.messages.slice(0, 10).map(async (msg) => {
+                const msgResponse = await fetch(
+                    `https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`,
+                    {
                         headers: {
-                            Authorization: `Bearer ${accessToken}`
-                        }
-                    });
-                    return await msgResponse.json();
-                });
-                const emailData = await Promise.all(emailPromises);
-                return emailData;
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    }
+                );
+                return msgResponse.ok ? await msgResponse.json() : null;
+            });
+
+            const emailData = await Promise.all(emailPromises);
+            return emailData.filter(Boolean);
+        } catch (error) {
+            console.error("Error fetching emails:", error);
+        }
+    };
+
+    // Fetch Google User Info
+    const fetchUserInfo = async (accessToken) => {
+        if (!accessToken) return;
+
+        try {
+            const response = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            if (response.ok) {
+                const userInfo = await response.json();
+                setUser(userInfo);
+            } else {
+                console.error("Failed to fetch user info:", await response.json());
             }
         } catch (error) {
             console.error("Error fetching user info:", error);
         }
     };
 
+    // Logout Function
     const logout = async () => {
-        console.log("logout");
         if (token) {
             try {
                 await fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
@@ -86,12 +122,12 @@ export const AuthProvider = ({ children }) => {
         router.push("/");
     };
 
-    // Checks for Token on Page Load
+    // Check for Token on Page Load
     useEffect(() => {
         const localToken = localStorage.getItem("authToken");
         if (localToken) {
             setToken(localToken);
-            fetchUserInfo(localToken);
+            fetchUserInfo(localToken); // Fetch user data
         }
 
         const hash = window.location.hash;
@@ -101,7 +137,7 @@ export const AuthProvider = ({ children }) => {
 
             if (accessToken) {
                 storeTokenInLS(accessToken);
-                fetchUserInfo(accessToken);
+                fetchUserInfo(accessToken); // Fetch user after storing token
                 window.history.replaceState(null, null, " ");
             }
         }
@@ -114,7 +150,7 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-// Hook to use Authentication Context
+// Hook for Using Authentication
 export const useAuth = () => {
     const authContextValue = useContext(AuthContext);
     if (!authContextValue) {
