@@ -2,16 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Website Blocked</title>
-    <link rel="stylesheet" href="blocked.css" />
+    <title>Blocked Website</title>
+    <style>
+      body {
+        background: #dc3545;
+        color: white;
+        text-align: center;
+        padding: 50px;
+        font-family: Arial, sans-serif;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      p {
+        font-size: 16px;
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🚨 Warning!</h1>
-      <p>This website has been identified as **phishing**.</p>
-      <a href="chrome://newtab/">Go to a Safe Page</a>
-    </div>
-    <script type="module" src="blocked.js"></script>
+    <h1>⚠️ This Website is Blocked</h1>
+    <p>
+      The website you attempted to visit has been flagged as a phishing site.
+    </p>
   </body>
 </html>

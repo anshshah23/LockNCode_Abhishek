@@ -2,7 +2,7 @@ const SAFE_REDIRECT_URL = "chrome://newtab/"; // Safe Redirect Page
 const API_URL = "http://localhost:8880/check-phishing/";
 
 async function checkPhishing(url, tabId, sendResponse) {
-    const domain = new URL(url).hostname;
+    const domain = new URL(url).href;
     try {
         const response = await fetch(API_URL, {
             method: "POST",
@@ -59,3 +59,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 });
+
+
+chrome.webRequest.onBeforeRequest.addListener(
+    async function (details) {
+        const url = details.url;
+        const apiUrl = "http://localhost:8880/check-phishing/";
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: url })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "phishing") {
+                return { redirectUrl: chrome.runtime.getURL("blocked.html") };
+            }
+        } catch (error) {
+            console.error("API Error:", error);
+        }
+    },
+    { urls: ["<all_urls>"] },
+    ["blocking"]
+);

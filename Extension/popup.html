@@ -37,6 +37,12 @@
         background: linear-gradient(135deg, #ff4b2b, #ff416c);
         transform: scale(1.05);
       }
+      .clear-btn {
+        background: linear-gradient(135deg, #6366f1, #4338ca);
+      }
+      .clear-btn:hover {
+        background: linear-gradient(135deg, #4338ca, #6366f1);
+      }
       #status-message {
         font-size: 14px;
         margin-top: 10px;
@@ -87,6 +93,7 @@
     <h2>🔍 Phishing Website Checker</h2>
     <button id="check-current-tab" class="btn">Check Current Tab</button>
     <button id="check-all-tabs" class="btn">Check All Tabs</button>
+    <button id="clear-results" class="btn clear-btn">Clear Results</button>
     <p id="status-message"></p>
     <div id="result-container"></div>
     <script src="popup.js"></script>
