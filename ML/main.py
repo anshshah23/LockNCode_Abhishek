@@ -3,10 +3,10 @@ from pydantic import BaseModel
 import pickle
 import numpy as np
 
-with open("phishing_detection_model.pkl", "rb") as model_file:
+with open("models/phishing_detection_model.pkl", "rb") as model_file:
     model = pickle.load(model_file)
 
-with open("tfidf_vectorizer.pkl", "rb") as vectorizer_file:
+with open("models/tfidf_vectorizer.pkl", "rb") as vectorizer_file:
     vectorizer = pickle.load(vectorizer_file)
 
 app = FastAPI()
