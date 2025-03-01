@@ -49,30 +49,30 @@ export const AuthProvider = ({ children }) => {
         return Buffer.from(data, 'base64').toString('utf-8');
     };
 
-    const extractAttachments = async (parts, attachments, messageId, accessToken) => {
-        for (const part of parts) {
-            if (part.filename && part.filename.length > 0 && part.body?.attachmentId) {
-                const attachmentResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${part.body.attachmentId}`, {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        Accept: 'application/json'
-                    }
-                });
+    // const extractAttachments = async (parts, attachments, messageId, accessToken) => {
+    //     for (const part of parts) {
+    //         if (part.filename && part.filename.length > 0 && part.body?.attachmentId) {
+    //             const attachmentResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${part.body.attachmentId}`, {
+    //                 headers: {
+    //                     Authorization: `Bearer ${accessToken}`,
+    //                     Accept: 'application/json'
+    //                 }
+    //             });
 
-                if (attachmentResponse.ok) {
-                    const attachmentData = await attachmentResponse.json();
-                    attachments.push({
-                        filename: part.filename,
-                        mimeType: part.mimeType,
-                        data: base64Decode(attachmentData.data)
-                    });
-                }
-            }
-            if (part.parts) {
-                await extractAttachments(part.parts, attachments, messageId, accessToken);
-            }
-        }
-    };
+    //             if (attachmentResponse.ok) {
+    //                 const attachmentData = await attachmentResponse.json();
+    //                 attachments.push({
+    //                     filename: part.filename,
+    //                     mimeType: part.mimeType,
+    //                     data: base64Decode(attachmentData.data)
+    //                 });
+    //             }
+    //         }
+    //         if (part.parts) {
+    //             await extractAttachments(part.parts, attachments, messageId, accessToken);
+    //         }
+    //     }
+    // };
 
     const extractEmailData = async (email, accessToken) => {
         const headers = email.payload.headers;
