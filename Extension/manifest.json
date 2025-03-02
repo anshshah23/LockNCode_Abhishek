@@ -7,10 +7,17 @@
         "storage",
         "tabs",
         "activeTab",
-        "scripting"
+        "scripting",
+        "tabs",
+        "storage",
+        "activeTab",
+        "webRequest",
+        "webRequestBlocking"
     ],
     "host_permissions": [
-        "<all_urls>"
+        "<all_urls>",
+        "http://localhost:8880/*",
+        "https://*/*"
     ],
     "background": {
         "service_worker": "background.js"
