@@ -111,7 +111,7 @@ def reinforce_learning(input_data: PhishingInput):
         raise HTTPException(status_code=400, detail="Label & text required")
 
     reinforcement.store_experience(input_data.text, input_data.label, input_data.mitigation)
-    return {"status": "Policy Updated – System is now smarter!"}
+    return {"status": "Policy Updated - System is now smarter!"}
 
 @app.post("/suggest_mitigation")
 def suggest_mitigation(input_data: PhishingInput):
