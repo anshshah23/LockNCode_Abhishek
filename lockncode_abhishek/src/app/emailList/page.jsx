@@ -205,20 +205,34 @@ function EmailTable() {
                         <Field label="Date & Time" value={formatDate(currentEmail.date)} />
                         <Field label="From" value={currentEmail.from} />
                         <Field label="Subject" value={currentEmail.subject} />
-                        <Field
-                            label="Phishing Analysis"
-                            value={
-                                currentEmail && phishingResults[currentEmail.id] ? (
-                                    <div>
-                                        <p className="text-lg"><strong>Results:</strong></p>
-                                        <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
-                                        <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
-                                        <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
-                                        <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
-                                    </div>
-                                ) : loading ? "Loading..." : "Analyzing..."
-                            }
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field
+                                label="Phishing Analysis"
+                                value={
+                                    currentEmail && phishingResults[currentEmail.id] ? (
+                                        <div>
+                                            <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
+                                            <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
+                                            <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
+                                            <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
+                                        </div>
+                                    ) : loading ? "Loading..." : "Analyzing..."
+                                }
+                            />
+                            <Field
+                                label="Phishing Analysis"
+                                value={
+                                    currentEmail && phishingResults[currentEmail.id] ? (
+                                        <div>
+                                            <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
+                                            <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
+                                            <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
+                                            <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
+                                        </div>
+                                    ) : loading ? "Loading..." : "Analyzing..."
+                                }
+                            />
+                        </div>
 
                         {/* Navigation Buttons */}
                         <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
