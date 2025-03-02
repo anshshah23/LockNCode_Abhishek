@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "url": "chrome-extension://ljlhgjghgmilmoalkbfdnhncggkajfcb/blocked.html"
+            }
+        },
+        "condition": {
+            "urlFilter": "http://localhost:8880/*",
+            "resourceTypes": [
+                "main_frame"
+            ]
+        }
+    }
+]

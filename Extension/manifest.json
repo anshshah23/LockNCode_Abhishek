@@ -7,15 +7,27 @@
         "storage",
         "tabs",
         "activeTab",
-        "scripting"
+        "scripting",
+        "declarativeNetRequest"
     ],
     "host_permissions": [
-        "<all_urls>"
+        "<all_urls>",
+        "http://localhost:8880/*",
+        "https://*/*"
     ],
     "background": {
         "service_worker": "background.js"
     },
     "action": {
         "default_popup": "popup.html"
+    },
+    "declarative_net_request": {
+        "rule_resources": [
+            {
+                "id": "ruleset1",
+                "enabled": true,
+                "path": "rules.json"
+            }
+        ]
     }
 }
