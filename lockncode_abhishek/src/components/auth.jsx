@@ -94,7 +94,6 @@ export const AuthProvider = ({ children }) => {
             if (textPart && textPart.body?.data) {
                 body = base64Decode(textPart.body.data);
             }
-            await extractAttachments(email.payload.parts, attachments, email.id, accessToken);
         } else if (email.payload.body?.data) {
             body = base64Decode(email.payload.body.data);
         }
