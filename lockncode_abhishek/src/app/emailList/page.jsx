@@ -103,10 +103,27 @@ async function detectEmailPhishing(subject, body) {
         return {
             isPhishing: false,
             confidenceScore: 0,
-            phishingReasons: ["API request failed"],
+            phishingReasons: [],
             suspiciousLinks: [],
             suggestedAction: "Unable to analyze",
         };
+    }
+}
+
+async function detectEmailPhishingModel(body) {
+    try {
+        const res = await fetch('https://sb9kzwdh-8900.inc1.devtunnels.ms/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: body })
+        })
+        const data = await res.json()
+        return data
+    }
+    catch (error) {
+        console.error("Phishing analysis failed:", error);
     }
 }
 
@@ -117,6 +134,7 @@ function EmailTable() {
     const [token, setToken] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [phishingResults, setPhishingResults] = useState({});
+    const [modelPhishingResults, setModelPhishingResults] = useState({});
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -135,11 +153,8 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
-            setCurrentIndex(0); // Set the first email as the default selection
-            data.map((email, index) => {
-                const isHtml = /<(\/?)(a|img|iframe|div|span|p|form|b|i|strong|ul|li|table|td|th|h[1-6])[ >]/i.test(email.body);
-                console.log(email);
-            });
+            setCurrentIndex(0);
+
             setCurrentIndex(0);
         } catch (error) {
             console.error("Error fetching emails:", error);
@@ -162,10 +177,18 @@ function EmailTable() {
 
             try {
                 const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
+                const phishingResultModel = await detectEmailPhishingModel(currentEmail.body);
+
                 setPhishingResults((prevResults) => ({
                     ...prevResults,
-                    [currentEmail.id]: phishingResult, // Store results per email ID
+                    [currentEmail.id]: phishingResult,
                 }));
+
+                setModelPhishingResults((prevResults) => ({
+                    ...prevResults,
+                    [currentEmail.id]: phishingResultModel, 
+                }));
+
             } catch (error) {
                 console.error("Phishing analysis failed:", error);
             }
@@ -177,7 +200,6 @@ function EmailTable() {
 
     return (
         <div className="w-full min-h-screen p-4 md:p-6 bg-slate-900 text-white">
-            {/* Inbox Header */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pt-14">
                 <h2 className="text-2xl font-bold">Your Inbox</h2>
                 <Button
@@ -207,34 +229,48 @@ function EmailTable() {
                         <Field label="Subject" value={currentEmail.subject} />
                         <div className="grid grid-cols-2 gap-4">
                             <Field
-                                label="Phishing Analysis"
+                                label="Phishing Analysis by LLM"
                                 value={
                                     currentEmail && phishingResults[currentEmail.id] ? (
                                         <div>
-                                            <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
+                                            <p><strong>Is Phishing:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
                                             <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
-                                            <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
+
+                                            {phishingResults[currentEmail.id].phishingReasons.length > 0 && (
+                                                <p>
+                                                    <strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}
+                                                </p>
+                                            )}
+
+                                            {phishingResults[currentEmail.id].suspiciousLinks.length > 0 && (
+                                                <p>
+                                                    <strong>Suspicious Links:</strong>{" "}
+                                                    {phishingResults[currentEmail.id].suspiciousLinks.map((link, index) => (
+                                                        <span key={index} style={{ color: "red", marginRight: "5px" }}>
+                                                            {link}
+                                                        </span>
+                                                    ))}
+                                                </p>
+                                            )}
+
                                             <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
                                         </div>
                                     ) : loading ? "Loading..." : "Analyzing..."
                                 }
+
                             />
                             <Field
-                                label="Phishing Analysis"
+                                label="Phishing Analysis by Model"
                                 value={
                                     currentEmail && phishingResults[currentEmail.id] ? (
                                         <div>
-                                            <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
-                                            <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
-                                            <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
-                                            <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
+                                            <p><strong>Is Phishing:</strong> {modelPhishingResults[(currentEmail.id)].classification}</p>
                                         </div>
                                     ) : loading ? "Loading..." : "Analyzing..."
                                 }
                             />
                         </div>
 
-                        {/* Navigation Buttons */}
                         <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
                             <Button
                                 onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
@@ -253,12 +289,10 @@ function EmailTable() {
                             </Button>
                         </div>
 
-                        {/* Email Body */}
                         <div className="w-full overflow-x-auto">
                             <Field label="Body" className="overflow-x-auto break-words" value={parse(emailBody)} />
                         </div>
 
-                        {/* Links Found */}
                         <Field
                             label="Links Found"
                             value={
@@ -283,8 +317,6 @@ function EmailTable() {
                             }
                         />
 
-                        {/* Malicious Links Placeholder */}
-                        <Field label="Potential Malicious Links" value="(Pending analysis...)" />
                     </div>
                 </div>
             ) : (
@@ -298,7 +330,6 @@ function EmailTable() {
     );
 }
 
-/* Reusable Field Component */
 const Field = ({ label, value }) => (
     <div className="w-full">
         <label className="text-sm font-semibold">{label}</label>

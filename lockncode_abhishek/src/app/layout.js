@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata = {
-  title: 'Phishnet Ai',
+  title: 'PhishNet AI',
   description: 'ML Detection for Phishing Websites'
 }
 
