@@ -42,13 +42,14 @@ function Navbar() {
         { name: "Uploads", link: "/fileUpload" },
         { name: "Analytics", link: "/analytics" },
         { name: "EmailList", link: "/emailList" },
+        { name: "About", link: "/aboutUs" },
     ];
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-muted transition-all duration-300 text-white ${isScrolled ? "shadow-md" : ""}`}>
             <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-primary" />
+                    <Shield className="h-6 w-6 text-purple-500" />
                     <span className="font-bold text-xl">
                         <Link href="/">PhishNet AI</Link>
                     </span>

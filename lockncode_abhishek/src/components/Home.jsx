@@ -7,7 +7,8 @@ import { Shield, Mail, Globe, MessageSquare, BarChart3, Code, AlertTriangle, Che
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import Link from "next/link"
+import SplineScene from "./Spline"
 // 3D Shield Model
 function ShieldModel(props) {
   return (
@@ -146,12 +147,16 @@ function Home() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button size="lg" className="md:gap-2">
-                Try Demo <ChevronRight className="h-4 w-full md:w-4" />
-              </Button>
-              <Button size="lg" variant="outline">
-                Learn More
-              </Button>
+              <Link href="/emailList" className="w-full sm:w-auto">
+                <Button size="lg" className="md:gap-2">
+                  Try Demo <ChevronRight className="h-4 w-full md:w-4" />
+                </Button>
+              </Link>
+              <Link href="/aboutUs" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline">
+                  Learn More
+                </Button>
+              </Link>
             </motion.div>
           </div>
         </div>
