@@ -38,9 +38,6 @@ const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dang
 
 async function detectEmailPhishing(subject, body) {
     try {
-        const maxBodyLength = 4000;
-        const trimmedBody = body.length > maxBodyLength ? body.slice(0, maxBodyLength) + "..." : body;
-
         const prompt = `You are an intelligent email security assistant. Analyze the provided email and determine if it is a phishing attempt.
         
         Follow these steps:
@@ -63,7 +60,7 @@ async function detectEmailPhishing(subject, body) {
         Do NOT include any explanations, only return JSON.
         `;
 
-        const emailText = `Subject: ${subject}\nBody: ${trimmedBody}`;
+        const emailText = `Subject: ${subject}\nBody: ${body}`;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4",
@@ -113,6 +110,23 @@ async function detectEmailPhishing(subject, body) {
     }
 }
 
+async function detectEmailPhishingModel(body) {
+    try {
+        const res = await fetch('https://sb9kzwdh-8900.inc1.devtunnels.ms/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: body })
+        })
+        const data = await res.json()
+        return data
+    }
+    catch (error) {
+        console.error("Phishing analysis failed:", error);
+    }
+}
+
 function EmailTable() {
     const { fetchEmails } = useAuth();
     const [emailData, setEmailData] = useState([]);
@@ -120,6 +134,7 @@ function EmailTable() {
     const [token, setToken] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [phishingResults, setPhishingResults] = useState({});
+    const [modelPhishingResults, setModelPhishingResults] = useState({});
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -138,7 +153,7 @@ function EmailTable() {
             let data = await fetchEmails(token);
             data = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setEmailData(data);
-            setCurrentIndex(0); // Set the first email as the default selection
+            setCurrentIndex(0);
 
             setCurrentIndex(0);
         } catch (error) {
@@ -162,10 +177,18 @@ function EmailTable() {
 
             try {
                 const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
+                const phishingResultModel = await detectEmailPhishingModel(currentEmail.body);
+
                 setPhishingResults((prevResults) => ({
                     ...prevResults,
-                    [currentEmail.id]: phishingResult, // Store results per email ID
+                    [currentEmail.id]: phishingResult,
                 }));
+
+                setModelPhishingResults((prevResults) => ({
+                    ...prevResults,
+                    [currentEmail.id]: phishingResultModel, 
+                }));
+
             } catch (error) {
                 console.error("Phishing analysis failed:", error);
             }
@@ -241,10 +264,7 @@ function EmailTable() {
                                 value={
                                     currentEmail && phishingResults[currentEmail.id] ? (
                                         <div>
-                                            <p><strong>Is Phishing:</strong> {phishingResults[(currentEmail.id)].isPhishing ? "Yes" : "No"}</p>
-                                            <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
-                                            <p><strong>Reasons:</strong> {phishingResults[currentEmail.id].phishingReasons.join(", ")}</p>
-                                            <p><strong>Suggested Action:</strong> {phishingResults[currentEmail.id].suggestedAction}</p>
+                                            <p><strong>Is Phishing:</strong> {modelPhishingResults[(currentEmail.id)].classification}</p>
                                         </div>
                                     ) : loading ? "Loading..." : "Analyzing..."
                                 }

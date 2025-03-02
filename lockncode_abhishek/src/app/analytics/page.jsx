@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import {
   BarChart,
@@ -441,7 +440,7 @@ export default function AnalyticsDashboard() {
         </div>
       </main>
       <footer className="border-t border-slate-800 bg-slate-950 p-6 text-center text-sm text-slate-500">
-        <p>© 2023 PhishGuard AI. All rights reserved. Real-time data updated every 60 seconds.</p>
+        <p>© 2023 PhishNet AI. All rights reserved. Real-time data updated every 60 seconds.</p>
       </footer>
     </div>
   )
