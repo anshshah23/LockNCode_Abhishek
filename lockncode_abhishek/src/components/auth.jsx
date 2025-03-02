@@ -94,11 +94,9 @@ export const AuthProvider = ({ children }) => {
             if (textPart && textPart.body?.data) {
                 body = base64Decode(textPart.body.data);
             }
-            await extractAttachments(email.payload.parts, attachments, email.id, accessToken);
         } else if (email.payload.body?.data) {
             body = base64Decode(email.payload.body.data);
         }
-
         return { subject, from, body, date, attachments };
     };
 
@@ -108,58 +106,57 @@ export const AuthProvider = ({ children }) => {
                 console.error("❌ No access token available.");
                 return [];
             }
-
+    
             console.log("📨 Fetching emails...");
-            const listResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages", {
+            const listResponse = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5", {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     Accept: "application/json",
                 },
             });
-
+    
             if (!listResponse.ok) {
                 const errorData = await listResponse.json();
                 if (listResponse.status === 401) {
                     console.warn("⚠️ Access token expired. Redirecting to login.");
-                    loginAndConnect(); // Re-authenticate
+                    loginAndConnect();
                     return [];
                 }
                 throw new Error(`Failed to fetch email list: ${listResponse.status} - ${errorData.error?.message}`);
             }
-
+    
             const listData = await listResponse.json();
             if (!listData.messages) {
                 console.log("📭 No emails found.");
                 return [];
             }
-
+    
             console.log(`📧 ${listData.messages.length} emails found.`);
-            const emailPromises = listData.messages.map(async (msg) => {
+    
+            const emailPromises = listData.messages.slice(0, 5).map(async (msg) => {
                 const msgResponse = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
                         Accept: "application/json",
                     },
                 });
-
+    
                 if (!msgResponse.ok) {
                     console.warn(`⚠️ Failed to fetch email with ID ${msg.id}`);
                     return null;
                 }
-
+    
                 const emailJson = await msgResponse.json();
                 return await extractEmailData(emailJson, accessToken);
             });
-
             const emailData = (await Promise.all(emailPromises)).filter((email) => email !== null);
-
-            console.log("✅ Emails fetched:", emailData);
             return emailData;
         } catch (error) {
             console.error("❌ Error fetching emails:", error);
             return [];
         }
     };
+    
 
     const logout = async () => {
         if (token) {

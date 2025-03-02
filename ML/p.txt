@@ -1,0 +1,123 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import random
+import requests
+import validators
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+import pickle
+
+# Load TF-IDF Model
+with open("models/phishing_detection_model.pkl", "rb") as model_file:
+    model = pickle.load(model_file)
+
+with open("models/tfidf_vectorizer.pkl", "rb") as vectorizer_file:
+    vectorizer = pickle.load(vectorizer_file)
+
+# Reinforcement Learning with Experience Buffer
+class ReinforcementLearning:
+    def __init__(self, model, buffer_size=100):
+        self.model = model
+        self.buffer = []
+        self.buffer_size = buffer_size
+
+    def store_experience(self, input_data, label, mitigation):
+        if len(self.buffer) >= self.buffer_size:
+            self.buffer.pop(0)
+        self.buffer.append((input_data, label, mitigation))
+
+    def train(self, batch_size=10):
+        if len(self.buffer) < batch_size:
+            return {"status": "Not enough data to retrain"}
+        
+        batch = random.sample(self.buffer, batch_size)
+        texts, labels, mitigations = zip(*batch)
+        features = vectorizer.transform(texts)
+
+        self.model.fit(features, labels)
+        return {"status": "Model updated"}
+
+reinforcement = ReinforcementLearning(model)
+
+app = FastAPI()
+
+class PhishingInput(BaseModel):
+    text: str = None
+    url: str = None
+    label: int = None
+    mitigation: str = None
+
+# URL Reputation Check
+def check_url_reputation(url):
+    if not validators.url(url):
+        return {"error": "Invalid URL"}
+    
+    response = requests.get(f"https://urlscan.io/api/v1/search/?q={url}")
+    return {"malicious": "true" in response.text.lower()}
+
+# Text Preprocessing
+def preprocess(text):
+    return vectorizer.transform([text])
+
+@app.post("/detect_email")
+def detect_email(input_data: PhishingInput):
+    features = preprocess(input_data.text)
+    prediction = model.predict(features)[0]
+    return {"phishing": bool(prediction)}
+
+@app.post("/detect_url")
+def detect_url(input_data: PhishingInput):
+    url_check = check_url_reputation(input_data.url)
+    return url_check
+
+@app.post("/detect_message")
+def detect_message(input_data: PhishingInput):
+    features = preprocess(input_data.text)
+    prediction = model.predict(features)[0]
+    return {"phishing": bool(prediction)}
+
+@app.post("/reinforce")
+def reinforce_learning(input_data: PhishingInput):
+    if input_data.label is None or input_data.text is None:
+        raise HTTPException(status_code=400, detail="Label & text required")
+
+    reinforcement.store_experience(input_data.text, input_data.label, input_data.mitigation)
+    return reinforcement.train(batch_size=10)
+
+@app.get("/suggest_mitigation")
+def suggest_mitigation(input_data: PhishingInput):
+    features = preprocess(input_data.text)
+    prediction = model.predict(features)[0]
+
+    if prediction == 1:
+        return {"solution": "Legitimate communication."}
+    else:
+        return {"solution": "Warning: Possible phishing. Do not click links, verify sender, report phishing."}
+
+
+{
+    "text": "Dear User, your bank account has been locked. Click here to verify: http://fakebank.com"
+}
+
+
+{
+    "url": "http://malicious-site.com"
+}
+
+
+{
+    "text": "Your Netflix account has been suspended. Click to reactivate.",
+    "label": 0,
+    "mitigation": "Verify sender, do not click unknown links."
+}
+
+
+{
+    "text": "Your PayPal account is restricted. Click here to unlock: http://fraudlink.com"
+}
+
+
