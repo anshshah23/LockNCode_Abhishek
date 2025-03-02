@@ -13,11 +13,18 @@ function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const { loginAndConnect, logout } = useAuth();
     const [token, setToken] = useState(null);
+    const [pathname, setPathname] = useState("");
 
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 100);
+            if (typeof window !== 'undefined') {
+                setIsScrolled(window.scrollY > 100);
+            }
         };
+
+        if (typeof window !== 'undefined') {
+            setPathname(window.location.pathname);  // Set pathname on client-side
+        }
 
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
@@ -50,7 +57,7 @@ function Navbar() {
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-6">
                     {Links.map((link) => (
-                        <Link key={link.name} href={link.link} className={`text-lg hover:text-primary transition-colors ${window.location.pathname === link.link ? "text-purple-500" : ""}`}>
+                        <Link key={link.name} href={link.link} className={`text-lg hover:text-primary transition-colors ${pathname === link.link ? "text-purple-500" : ""}`}>
                             {link.name}
                         </Link>
                     ))}
