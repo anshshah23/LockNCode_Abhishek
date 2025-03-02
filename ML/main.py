@@ -8,15 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Add CORS middleware to allow all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "*"
-    ],  # Allows all origins, or you can specify a list of allowed domains
+    ],  
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 with open("models/phishing_detection_model.pkl", "rb") as model_file:
     model = pickle.load(model_file)
@@ -35,6 +34,6 @@ def predict_email(input_data: EmailInput):
 
     prediction = model.predict(input_features)
 
-    result = "Normal mail" if prediction[0] == 1 else "Spam mail"
+    result = "Legitimate mail" if prediction[0] == 1 else "Phishy mail"
 
     return {"message": input_data.message, "classification": result}
