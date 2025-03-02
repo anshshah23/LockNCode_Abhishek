@@ -38,6 +38,9 @@ const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dang
 
 async function detectEmailPhishing(subject, body) {
     try {
+        const maxBodyLength = 4000;
+        const trimmedBody = body.length > maxBodyLength ? body.slice(0, maxBodyLength) + "..." : body;
+
         const prompt = `You are an intelligent email security assistant. Analyze the provided email and determine if it is a phishing attempt.
         
         Follow these steps:
@@ -60,7 +63,7 @@ async function detectEmailPhishing(subject, body) {
         Do NOT include any explanations, only return JSON.
         `;
 
-        const emailText = `Subject: ${subject}\nBody: ${body}`;
+        const emailText = `Subject: ${subject}\nBody: ${trimmedBody}`;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4",
