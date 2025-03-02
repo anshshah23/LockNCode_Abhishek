@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: red;
+    color: white;
+    padding: 50px;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+a {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
