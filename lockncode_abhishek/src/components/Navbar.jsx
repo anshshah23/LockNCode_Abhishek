@@ -32,7 +32,7 @@ function Navbar() {
 
     const Links = [
         { name: "Home", link: "/" },
-        { name: "Features", link: "/features" },
+        { name: "Upload", link: "/fileUpload" },
         { name: "Analytics", link: "/analytics" },
         { name: "Emails", link: "/emailList" },
     ];
