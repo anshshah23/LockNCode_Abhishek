@@ -8,11 +8,7 @@
         "tabs",
         "activeTab",
         "scripting",
-        "tabs",
-        "storage",
-        "activeTab",
-        "webRequest",
-        "webRequestBlocking"
+        "declarativeNetRequest"
     ],
     "host_permissions": [
         "<all_urls>",
@@ -24,5 +20,14 @@
     },
     "action": {
         "default_popup": "popup.html"
+    },
+    "declarative_net_request": {
+        "rule_resources": [
+            {
+                "id": "ruleset1",
+                "enabled": true,
+                "path": "rules.json"
+            }
+        ]
     }
 }
