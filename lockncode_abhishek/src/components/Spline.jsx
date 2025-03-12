@@ -1,13 +1,13 @@
-import Spline from '@splinetool/react-spline/next';
+import Spline from '@splinetool/react-spline';
 
-function SplineScene() {
+function SpHome() {
   return (
     <main>
       <Spline
-        scene="https://prod.spline.design/ZkENgbsHZdZSVFSr/scene.splinecode" 
+        scene="https://prod.spline.design/FIEu522j62GC35U1/scene.splinecode" 
       />
     </main>
   );
 }
 
-export default SplineScene;
+export default SpHome;

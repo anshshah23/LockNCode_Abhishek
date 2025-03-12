@@ -1,0 +1,71 @@
+.vol-button {
+    border: unset;
+    z-index: 1;
+    position: relative;
+    color: #fff;
+    -webkit-box-shadow: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
+    box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
+    transition: all 400ms;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+   }
+   
+   .vol-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0;
+    border-radius: 0;
+    background-color: #4aabff;
+    z-index: -1;
+    -webkit-box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
+    box-shadow: 4px 14px 19px -3px rgba(0,0,0,0.87);
+    transition: all 1400ms;
+   }
+   
+   .vol-button:hover {
+    color: #fff;
+   }
+   
+   .vol-button:hover::before {
+    width: 100%;
+   }
+
+   .vol-button2 {
+    border: unset;
+    z-index: 1;
+    color: #fff;
+    position: relative;
+    -webkit-box-shadow: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
+    box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
+    transition: all 400ms;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+   }
+   
+   .vol-button2::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0;
+    border-radius: 0;
+    background-color: #804aff;
+    z-index: -1;
+    -webkit-box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
+    box-shadow: 4px 14px 19px -3px rgba(0,0,0,0.87);
+    transition: all 1400ms;
+   }
+   
+   .vol-button2:hover {
+    color: #fff;
+   }
+   
+   .vol-button2:hover::before {
+    width: 100%;
+   }

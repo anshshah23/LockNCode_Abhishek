@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import SplineScene from "./Spline"
+import "@/styles/volunteer.css"
 // 3D Shield Model
 function ShieldModel(props) {
   return (
@@ -128,10 +129,15 @@ function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 text-white">
       {/* Hero Section */}
-      <section className="relative pt-40 pb-5 md:pb-5 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none"></div>
+      <section className="relative h-screen pt-48 pb-5 md:pb-5 overflow-hidden">
 
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="absolute inset-0 w-full h-full z-10 pt-40 md:pt-0">
+          <div className="absolute inset-0 h-screen w-screen bg-black/25 z-10"></div>
+          <SplineScene />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/25 via-purple-500/20 to-transparent pointer-events-none"></div>
+
+        <div className="container mx-auto flex justify-evenly items-center px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -159,12 +165,12 @@ function Home() {
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Link href="/emailList" className="w-full sm:w-auto">
-                <Button size="lg" className="md:gap-2">
+                <Button size="lg" className="vol-button md:gap-2 text-white md:bg-gradient-to-r from-cyan-400 to-purple-500">
                   Try Demo <ChevronRight className="h-4 w-full md:w-4" />
                 </Button>
               </Link>
               <Link href="/aboutUs" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" className="vol-button2 md:gap-2 text-white md:bg-gradient-to-r from-purple-500 to-blue-500">
                   Learn More
                 </Button>
               </Link>
