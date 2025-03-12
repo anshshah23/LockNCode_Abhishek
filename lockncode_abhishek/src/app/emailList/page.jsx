@@ -110,22 +110,23 @@ async function detectEmailPhishing(subject, body) {
     }
 }
 
-async function detectEmailPhishingModel(body) {
-    try {
-        const res = await fetch('https://sb9kzwdh-8900.inc1.devtunnels.ms/predict', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: body })
-        })
-        const data = await res.json()
-        return data
-    }
-    catch (error) {
-        console.error("Phishing analysis failed:", error);
-    }
-}
+// async function detectEmailPhishingModel(body) {
+//     try {
+//         const res = await fetch('http://localhost:8000/predict', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json'
+//             },
+//             body: JSON.stringify({ message: body }),
+//             mode: 'no-cors'
+//         })
+//         const data = await res.json()
+//         return data
+//     }
+//     catch (error) {
+//         console.error("Phishing analysis failed:", error);
+//     }
+// }
 
 function EmailTable() {
     const { fetchEmails } = useAuth();
@@ -176,19 +177,17 @@ function EmailTable() {
             if (!currentEmail) return; // Ensure email exists
 
             try {
-                const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
                 const phishingResultModel = await detectEmailPhishingModel(currentEmail.body);
+                setModelPhishingResults((prevResults) => ({
+                    ...prevResults,
+                    [currentEmail.id]: phishingResultModel,
+                }));
 
+                const phishingResult = await detectEmailPhishing(currentEmail.subject, currentEmail.body);
                 setPhishingResults((prevResults) => ({
                     ...prevResults,
                     [currentEmail.id]: phishingResult,
                 }));
-
-                setModelPhishingResults((prevResults) => ({
-                    ...prevResults,
-                    [currentEmail.id]: phishingResultModel, 
-                }));
-
             } catch (error) {
                 console.error("Phishing analysis failed:", error);
             }
@@ -227,13 +226,13 @@ function EmailTable() {
                         <Field label="Date & Time" value={formatDate(currentEmail.date)} />
                         <Field label="From" value={currentEmail.from} />
                         <Field label="Subject" value={currentEmail.subject} />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             <Field
-                                label="Phishing Analysis by LLM"
+                                label="Phishing Analysis by Model"
                                 value={
                                     currentEmail && phishingResults[currentEmail.id] ? (
                                         <div>
-                                            <p><strong>Is Phishing:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
+                                            <p><strong>Is Phishy:</strong> {phishingResults[currentEmail.id].isPhishing ? "Yes" : "No"}</p>
                                             <p><strong>Confidence Score:</strong> {phishingResults[currentEmail.id].confidenceScore}%</p>
 
                                             {phishingResults[currentEmail.id].phishingReasons.length > 0 && (
@@ -259,16 +258,7 @@ function EmailTable() {
                                 }
 
                             />
-                            <Field
-                                label="Phishing Analysis by Model"
-                                value={
-                                    currentEmail && phishingResults[currentEmail.id] ? (
-                                        <div>
-                                            <p><strong>Is Phishing:</strong> {modelPhishingResults[(currentEmail.id)].classification}</p>
-                                        </div>
-                                    ) : loading ? "Loading..." : "Analyzing..."
-                                }
-                            />
+                           
                         </div>
 
                         <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
